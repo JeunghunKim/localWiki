@@ -1,0 +1,24 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Language specific
+node_modules/
+__pycache__/
+target/
+dist/
+.next/
+.npm-cache/
+.npm/
