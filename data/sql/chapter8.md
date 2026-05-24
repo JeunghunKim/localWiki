@@ -262,5 +262,5 @@ DELETE FROM orders WHERE order_id = 108;
 
 ---
 
-*이전 챕터: [Chapter 7 - 서브쿼리](chapter7.md)*
-*다음 챕터: [Chapter 9 - 테이블 설계 (DDL)](chapter9.md)*
+*이전 챕터: [Chapter 7 - 서브쿼리](#sql/chapter7.md)*
+*다음 챕터: [Chapter 9 - 테이블 설계 (DDL)](#sql/chapter9.md)*

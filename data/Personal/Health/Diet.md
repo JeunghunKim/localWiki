@@ -1,2 +1,0 @@
-# Diet
-Healthy eating habits.

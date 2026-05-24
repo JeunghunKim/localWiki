@@ -285,5 +285,5 @@ SELECT * FROM products WHERE stock < 10;
 
 ---
 
-*이전 챕터: [Chapter 2 - 기본 SELECT 문](chapter2.md)*
-*다음 챕터: [Chapter 4 - 정렬과 제한](chapter4.md)*
+*이전 챕터: [Chapter 2 - 기본 SELECT 문](#sql/chapter2.md)*
+*다음 챕터: [Chapter 4 - 정렬과 제한](#sql/chapter4.md)*

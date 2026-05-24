@@ -256,4 +256,4 @@ SELECT * FROM orders;
 
 ---
 
-*다음 챕터: [Chapter 2 - 기본 SELECT 문](chapter2.md)*
+*다음 챕터: [Chapter 2 - 기본 SELECT 문](#sql/chapter2.md)*

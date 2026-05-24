@@ -268,5 +268,5 @@ SELECT name || ' (' || email || ')' AS 연락처 FROM customers;
 
 ---
 
-*이전 챕터: [Chapter 1 - SQL과 데이터베이스 기초](chapter1.md)*
-*다음 챕터: [Chapter 3 - WHERE 절과 필터링](chapter3.md)*
+*이전 챕터: [Chapter 1 - SQL과 데이터베이스 기초](#sql/chapter1.md)*
+*다음 챕터: [Chapter 3 - WHERE 절과 필터링](#sql/chapter3.md)*

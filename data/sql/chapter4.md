@@ -247,5 +247,5 @@ SELECT * FROM orders ORDER BY order_date DESC LIMIT 5;
 
 ---
 
-*이전 챕터: [Chapter 3 - WHERE 절과 필터링](chapter3.md)*
-*다음 챕터: [Chapter 5 - 집계 함수와 GROUP BY](chapter5.md)*
+*이전 챕터: [Chapter 3 - WHERE 절과 필터링](#sql/chapter3.md)*
+*다음 챕터: [Chapter 5 - 집계 함수와 GROUP BY](#sql/chapter5.md)*

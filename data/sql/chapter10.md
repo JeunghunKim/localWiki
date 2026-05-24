@@ -440,5 +440,5 @@ SQL의 기초부터 고급까지 10개 챕터를 완료했습니다. 🎉
 
 ---
 
-*이전 챕터: [Chapter 9 - 테이블 설계 (DDL)](chapter9.md)*
-*처음으로: [ROADMAP](ROADMAP.md)*
+*이전 챕터: [Chapter 9 - 테이블 설계 (DDL)](#sql/chapter9.md)*
+*처음으로: [ROADMAP](#sql/ROADMAP.md)*

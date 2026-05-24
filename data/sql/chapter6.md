@@ -274,5 +274,5 @@ ORDER BY 총구매금액 DESC;
 
 ---
 
-*이전 챕터: [Chapter 5 - 집계 함수와 GROUP BY](chapter5.md)*
-*다음 챕터: [Chapter 7 - 서브쿼리](chapter7.md)*
+*이전 챕터: [Chapter 5 - 집계 함수와 GROUP BY](#sql/chapter5.md)*
+*다음 챕터: [Chapter 7 - 서브쿼리](#sql/chapter7.md)*

@@ -1,2 +1,0 @@
-# React
-Frontend library notes.

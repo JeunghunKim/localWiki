@@ -4,6 +4,5 @@ This is the main page of your local wiki.
 
 ## Quick Links
 - [[Guide]]
-- [[Notes]]
 
 You can create new pages by simply adding `.md` files to the data folder.

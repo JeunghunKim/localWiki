@@ -1,2 +1,0 @@
-# Budget
-Monthly spending plan.

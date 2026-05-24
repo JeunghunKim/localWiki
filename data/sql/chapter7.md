@@ -291,5 +291,5 @@ FROM customers c;
 
 ---
 
-*이전 챕터: [Chapter 6 - JOIN](chapter6.md)*
-*다음 챕터: [Chapter 8 - 데이터 조작 (DML)](chapter8.md)*
+*이전 챕터: [Chapter 6 - JOIN](#sql/chapter6.md)*
+*다음 챕터: [Chapter 8 - 데이터 조작 (DML)](#sql/chapter8.md)*
