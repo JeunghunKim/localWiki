@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  local-wiki:
+    build: .
+    container_name: local-wiki
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/usr/src/app/data
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
