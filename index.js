@@ -113,6 +113,8 @@ chokidar.watch(DATA_DIR).on('all', (event, filePath) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`Local Wiki server is running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Local Wiki server is running on:`);
+  console.log(`- Local: http://localhost:${PORT}`);
+  console.log(`- Network: http://<your-local-ip>:${PORT}`);
 });
