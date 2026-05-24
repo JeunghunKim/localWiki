@@ -60,6 +60,45 @@ async function loadPageList(filter = '') {
     }
 }
 
+async function searchContent(query) {
+    if (!query) return;
+    
+    const contentDiv = document.getElementById('content');
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const results = await response.json();
+
+        if (results.length === 0) {
+            contentDiv.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <p class="text-lg">"${query}"에 대한 검색 결과가 없습니다.</p>
+                </div>`;
+            return;
+        }
+
+        let html = `<h2 class="text-2xl font-bold mb-6">🔍 "${query}" 검색 결과 (${results.length})</h2>`;
+        html += `<div class="space-y-6">`;
+        
+        results.forEach(res => {
+            html += `
+                <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <a href="#${res.path}" class="text-blue-600 font-semibold text-lg hover:underline" 
+                       onclick="event.preventDefault(); loadPageContent('${res.path}'); updateActiveLink(event.target)">
+                       ${res.title}
+                    </a>
+                    <p class="text-gray-600 text-sm mt-2 italic">... ${res.snippet} ...</p>
+                    <div class="text-xs text-gray-400 mt-1">${res.path}</div>
+                </div>`;
+        });
+        
+        html += `</div>`;
+        contentDiv.innerHTML = html;
+    } catch (error) {
+        console.error('Search error:', error);
+        contentDiv.innerHTML = '<div class="text-center text-red-500 mt-20">검색 중 오류가 발생했습니다.</div>';
+    }
+}
+
 async function loadPageContent(name) {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = '<div class="text-center text-gray-500 mt-20">로딩 중...</div>';
@@ -136,8 +175,18 @@ window.addEventListener('DOMContentLoaded', () => {
     // Search input event listener
     const searchInput = document.getElementById('search');
     if (searchInput) {
+        let searchTimeout;
         searchInput.addEventListener('input', (e) => {
-            loadPageList(e.target.value);
+            const query = e.target.value;
+            loadPageList(query);
+            
+            // Debounced full-text search
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2) {
+                    searchContent(query);
+                }
+            }, 300);
         });
     }
     
@@ -165,10 +214,13 @@ function setupMobileMenu() {
     if (closeMenu) closeMenu.onclick = toggleSidebar;
     if (overlay) overlay.onclick = toggleSidebar;
 
-    // Close sidebar when a link is clicked on mobile
+    // Close sidebar when a file link is clicked on mobile
     document.getElementById('sidebar').addEventListener('click', (e) => {
         if (window.innerWidth < 1024) {
-            toggleSidebar();
+            const link = e.target.closest('a');
+            if (link && link.querySelector('.file-icon')) {
+                toggleSidebar();
+            }
         }
     });
 }

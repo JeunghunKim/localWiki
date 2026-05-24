@@ -56,9 +56,56 @@ function getFilesTree(dir, relativePath = '') {
 }
 
 /**
- * Get list of all markdown pages as a tree structure.
+ * Search for a keyword in all markdown files.
  */
-app.get('/api/pages', (req, res) => {
+app.get('/api/search', (req, res) => {
+  const query = req.query.q;
+  if (!query) {
+    return res.json([]);
+  }
+
+  try {
+    const results = [];
+    const files = getAllMdFiles(DATA_DIR);
+
+    for (const filePath of files) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const relativePath = path.relative(DATA_DIR, filePath);
+      
+      if (content.toLowerCase().includes(query.toLowerCase())) {
+        // Find the line containing the keyword for a snippet
+        const lines = content.split('\n');
+        const matchedLine = lines.find(line => line.toLowerCase().includes(query.toLowerCase())) || '';
+        
+        results.push({
+          title: path.basename(relativePath, '.md'),
+          path: relativePath,
+          snippet: matchedLine.trim()
+        });
+      }
+    }
+    res.json(results);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+/**
+ * Helper to get all .md files recursively.
+ */
+function getAllMdFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir, { withFileTypes: true });
+  for (const file of files) {
+    const filePath = path.join(dir, file.name);
+    if (file.isDirectory()) {
+      getAllMdFiles(filePath, fileList);
+    } else if (file.name.endsWith('.md')) {
+      fileList.push(filePath);
+    }
+  }
+  return fileList;
+}
   try {
     const tree = getFilesTree(DATA_DIR);
     res.json(tree);
