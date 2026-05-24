@@ -67,8 +67,8 @@ app.get('/api/pages', (req, res) => {
 /**
  * Get content of a specific markdown page.
  */
-app.get('/api/pages/:path*', (req, res) => {
-  const fileName = req.params.path;
+app.get(/\/api\/pages\/(.*)/, (req, res) => {
+  const fileName = req.params[0];
   if (!fileName) {
     return res.status(400).json({ error: 'Page name is required' });
   }
