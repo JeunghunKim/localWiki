@@ -1,28 +1,57 @@
 async function loadPageList(filter = '') {
     try {
         const response = await fetch('/api/pages');
-        const pages = await response.json();
+        const tree = await response.json();
         const sidebar = document.getElementById('sidebar');
         sidebar.innerHTML = '';
 
-        const filteredPages = pages.filter(page => 
-            page.title.toLowerCase().includes(filter.toLowerCase())
-        );
+        const filterLower = filter.toLowerCase();
 
-        filteredPages.forEach(page => {
-            const a = document.createElement('a');
-            a.href = `#${page.name}`;
-            a.className = 'block px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors';
-            a.textContent = page.title;
-            a.onclick = (e) => {
-                e.preventDefault();
-                loadPageContent(page.name);
-                updateActiveLink(a);
-            };
-            sidebar.appendChild(a);
-        });
+        function renderNodes(nodes, container) {
+            nodes.forEach(node => {
+                if (filter && node.type === 'file' && !node.title.toLowerCase().includes(filterLower)) {
+                    // In a real search, we might want to keep parent folders if children match.
+                    // For simplicity, we'll just filter the leaf nodes.
+                    return;
+                }
 
-        if (filteredPages.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'tree-node-container';
+
+                const link = document.createElement('a');
+                link.className = `block px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 transition-colors ${node.type === 'dir' ? 'font-medium' : ''}`;
+                
+                if (node.type === 'dir') {
+                    link.innerHTML = `<span class="folder-icon"></span> ${node.name}`;
+                    const childrenDiv = document.createElement('div');
+                    childrenDiv.className = 'tree-children';
+                    
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        childrenDiv.classList.toggle('open');
+                        link.querySelector('.folder-icon').classList.toggle('open');
+                    };
+                    
+                    renderNodes(node.children, childrenDiv);
+                    div.appendChild(link);
+                    div.appendChild(childrenDiv);
+                } else {
+                    link.innerHTML = `<span class="file-icon"></span> ${node.title}`;
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        loadPageContent(node.path);
+                        updateActiveLink(link);
+                    };
+                    div.appendChild(link);
+                }
+                
+                container.appendChild(div);
+            });
+        }
+
+        renderNodes(tree, sidebar);
+
+        if (sidebar.innerHTML === '') {
             sidebar.innerHTML = '<div class="text-sm text-gray-500 italic">No pages found.</div>';
         }
     } catch (error) {

@@ -17,6 +17,13 @@
         .prose li { margin-bottom: 0.25rem; }
         .prose a { color: #0366d6; text-decoration: none; }
         .prose a:hover { text-decoration: underline; }
+        
+        .tree-node { cursor: pointer; user-select: none; }
+        .tree-children { margin-left: 1.25rem; display: none; }
+        .tree-children.open { display: block; }
+        .folder-icon::before { content: '📁 '; }
+        .folder-icon.open::before { content: '📂 '; }
+        .file-icon::before { content: '📄 '; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
