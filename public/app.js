@@ -129,6 +129,7 @@ function updateActiveLink(activeElement) {
 
 // Initial Load
 window.addEventListener('DOMContentLoaded', () => {
+    setupMobileMenu();
     setupSocket();
     loadPageList();
     
@@ -148,6 +149,29 @@ window.addEventListener('DOMContentLoaded', () => {
         loadPageContent('index.md');
     }
 });
+
+function setupMobileMenu() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const closeMenu = document.getElementById('close-menu');
+    const sidebar = document.getElementById('sidebar-container');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    if (menuToggle) menuToggle.onclick = toggleSidebar;
+    if (closeMenu) closeMenu.onclick = toggleSidebar;
+    if (overlay) overlay.onclick = toggleSidebar;
+
+    // Close sidebar when a link is clicked on mobile
+    document.getElementById('sidebar').addEventListener('click', (e) => {
+        if (window.innerWidth < 1024) {
+            toggleSidebar();
+        }
+    });
+}
 
 function setupSocket() {
     const socket = io();
