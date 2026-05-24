@@ -26,6 +26,10 @@ app.use(express.static('public'));
  */
 function getFilesTree(dir, relativePath = '') {
   const items = fs.readdirSync(dir, { withFileTypes: true });
+  
+  // Natural sort items by name (1, 2, ..., 10 instead of 1, 10, 2, ...)
+  items.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  
   const tree = [];
 
   for (const item of items) {
