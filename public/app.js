@@ -41,6 +41,9 @@ async function loadPageList(filter = '') {
                         e.preventDefault();
                         loadPageContent(node.path);
                         updateActiveLink(link);
+                        if (window.innerWidth < 1024 && window.toggleWikiSidebar) {
+                            window.toggleWikiSidebar();
+                        }
                     };
                     div.appendChild(link);
                 }
@@ -214,15 +217,8 @@ function setupMobileMenu() {
     if (closeMenu) closeMenu.onclick = toggleSidebar;
     if (overlay) overlay.onclick = toggleSidebar;
 
-    // Close sidebar when a file link is clicked on mobile
-    document.getElementById('sidebar').addEventListener('click', (e) => {
-        if (window.innerWidth < 1024) {
-            const link = e.target.closest('a');
-            if (link && link.querySelector('.file-icon')) {
-                toggleSidebar();
-            }
-        }
-    });
+    // Make toggleSidebar available to other functions
+    window.toggleWikiSidebar = toggleSidebar;
 }
 
 function setupSocket() {
