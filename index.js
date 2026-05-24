@@ -106,6 +106,10 @@ function getAllMdFiles(dir, fileList = []) {
   }
   return fileList;
 }
+/**
+ * Get list of all markdown pages as a tree structure.
+ */
+app.get('/api/pages', (req, res) => {
   try {
     const tree = getFilesTree(DATA_DIR);
     res.json(tree);
