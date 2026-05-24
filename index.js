@@ -67,8 +67,12 @@ app.get('/api/pages', (req, res) => {
 /**
  * Get content of a specific markdown page.
  */
-app.get('/api/pages/:name', (req, res) => {
-  const fileName = req.params.name;
+app.get('/api/pages/*', (req, res) => {
+  const fileName = req.params[0];
+  if (!fileName) {
+    return res.status(400).json({ error: 'Page name is required' });
+  }
+
   if (!fileName.endsWith('.md')) {
     // Try adding .md if not provided
     const nameWithExt = `${fileName}.md`;
