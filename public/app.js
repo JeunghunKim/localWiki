@@ -207,6 +207,7 @@ function setupMobileMenu() {
     const closeMenu = document.getElementById('close-menu');
     const sidebar = document.getElementById('sidebar-container');
     const overlay = document.getElementById('sidebar-overlay');
+    const refreshBtn = document.getElementById('refresh-btn');
 
     function toggleSidebar() {
         sidebar.classList.toggle('-translate-x-full');
@@ -216,6 +217,13 @@ function setupMobileMenu() {
     if (menuToggle) menuToggle.onclick = toggleSidebar;
     if (closeMenu) closeMenu.onclick = toggleSidebar;
     if (overlay) overlay.onclick = toggleSidebar;
+    
+    if (refreshBtn) {
+        refreshBtn.onclick = () => {
+            loadPageList();
+            // Optional: add a small animation or notification that it's refreshing
+        };
+    }
 
     // Make toggleSidebar available to other functions
     window.toggleWikiSidebar = toggleSidebar;

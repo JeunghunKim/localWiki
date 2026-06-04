@@ -22,3 +22,6 @@ dist/
 .next/
 .npm-cache/
 .npm/
+
+# Custom dir
+hijh/

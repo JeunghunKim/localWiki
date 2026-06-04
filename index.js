@@ -33,6 +33,8 @@ function getFilesTree(dir, relativePath = '') {
   const tree = [];
 
   for (const item of items) {
+    if (item.name.startsWith('.')) continue; // Skip hidden files and directories (e.g., .git)
+
     const fullPath = path.join(dir, item.name);
     const relPath = path.join(relativePath, item.name);
 
@@ -97,6 +99,7 @@ app.get('/api/search', (req, res) => {
 function getAllMdFiles(dir, fileList = []) {
   const files = fs.readdirSync(dir, { withFileTypes: true });
   for (const file of files) {
+    if (file.name.startsWith('.')) continue; // Skip hidden files and directories (e.g., .git)
     const filePath = path.join(dir, file.name);
     if (file.isDirectory()) {
       getAllMdFiles(filePath, fileList);
@@ -157,7 +160,9 @@ function sendFileContent(filePath, res) {
 
 // Watch for file changes in DATA_DIR
 chokidar.watch(DATA_DIR).on('all', (event, filePath) => {
-  console.log(`File event: ${event} on ${filePath}`);
+  if (!filePath.includes('.git')) {
+    console.log(`File event: ${event} on ${filePath}`);
+  }
   const fileName = path.basename(filePath);
   if (fileName.endsWith('.md')) {
     io.emit('file-changed', { event, fileName });
