@@ -5,6 +5,7 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const chokidar = require('chokidar');
+const SearchIndex = require('./searchIndex');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,8 @@ const io = new Server(server, {
 });
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.resolve(__dirname, 'data');
+
+const searchIndex = new SearchIndex(DATA_DIR);
 
 app.use(cors());
 app.use(express.json());
@@ -58,7 +61,7 @@ function getFilesTree(dir, relativePath = '') {
 }
 
 /**
- * Search for a keyword in all markdown files.
+ * Search using the in-memory index (Phase 1).
  */
 app.get('/api/search', (req, res) => {
   const query = req.query.q;
@@ -67,48 +70,13 @@ app.get('/api/search', (req, res) => {
   }
 
   try {
-    const results = [];
-    const files = getAllMdFiles(DATA_DIR);
-
-    for (const filePath of files) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      const relativePath = path.relative(DATA_DIR, filePath);
-      
-      if (content.toLowerCase().includes(query.toLowerCase())) {
-        // Find the line containing the keyword for a snippet
-        const lines = content.split('\n');
-        const matchedLine = lines.find(line => line.toLowerCase().includes(query.toLowerCase())) || '';
-        
-        results.push({
-          title: path.basename(relativePath, '.md'),
-          path: relativePath,
-          snippet: matchedLine.trim()
-        });
-      }
-    }
+    const results = searchIndex.search(query);
     res.json(results);
   } catch (error) {
     console.error('Search error:', error);
     res.status(500).json({ error: 'Search failed' });
   }
 });
-
-/**
- * Helper to get all .md files recursively.
- */
-function getAllMdFiles(dir, fileList = []) {
-  const files = fs.readdirSync(dir, { withFileTypes: true });
-  for (const file of files) {
-    if (file.name.startsWith('.')) continue; // Skip hidden files and directories (e.g., .git)
-    const filePath = path.join(dir, file.name);
-    if (file.isDirectory()) {
-      getAllMdFiles(filePath, fileList);
-    } else if (file.name.endsWith('.md')) {
-      fileList.push(filePath);
-    }
-  }
-  return fileList;
-}
 /**
  * Get list of all markdown pages as a tree structure.
  */
@@ -158,13 +126,23 @@ function sendFileContent(filePath, res) {
   }
 }
 
-// Watch for file changes in DATA_DIR
-chokidar.watch(DATA_DIR).on('all', (event, filePath) => {
+// Build search index on startup, then start watching for changes
+searchIndex.build();
+
+// Watch for file changes in DATA_DIR (ignoreInitial: true prevents duplicate indexing of existing files)
+chokidar.watch(DATA_DIR, { ignoreInitial: true }).on('all', (event, filePath) => {
   if (!filePath.includes('.git')) {
     console.log(`File event: ${event} on ${filePath}`);
   }
   const fileName = path.basename(filePath);
   if (fileName.endsWith('.md')) {
+    const relativePath = path.relative(DATA_DIR, filePath);
+    // Update search index
+    if (event === 'unlink' || event === 'unlinkDir') {
+      searchIndex.removeFile(relativePath);
+    } else if (event === 'add' || event === 'change') {
+      searchIndex.indexFile(relativePath);
+    }
     io.emit('file-changed', { event, fileName });
   }
 });

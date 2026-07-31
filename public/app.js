@@ -67,6 +67,7 @@ async function searchContent(query) {
     if (!query) return;
     
     const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = '<div class="flex justify-center mt-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
     try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         const results = await response.json();
@@ -83,13 +84,16 @@ async function searchContent(query) {
         html += `<div class="space-y-6">`;
         
         results.forEach(res => {
+            const highlightedSnippet = res.snippet
+                ? res.snippet.replace(new RegExp(`(${escapeRegex(query)})`, 'gi'), '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>')
+                : '';
             html += `
                 <div class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <a href="#${res.path}" class="text-blue-600 font-semibold text-lg hover:underline" 
                        onclick="event.preventDefault(); loadPageContent('${res.path}'); updateActiveLink(event.target)">
                        ${res.title}
                     </a>
-                    <p class="text-gray-600 text-sm mt-2 italic">... ${res.snippet} ...</p>
+                    <p class="text-gray-600 text-sm mt-2 italic">... ${highlightedSnippet} ...</p>
                     <div class="text-xs text-gray-400 mt-1">${res.path}</div>
                 </div>`;
         });
@@ -139,6 +143,10 @@ async function loadPageContent(name) {
         console.error('Error loading page content:', error);
         contentDiv.innerHTML = '<div class="text-center text-red-500 mt-20">콘텐츠를 불러오는 중 오류가 발생했습니다.</div>';
     }
+}
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function handleWikiLinks() {
