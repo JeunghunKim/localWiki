@@ -149,6 +149,41 @@ function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Search History (localStorage) */
+function saveSearchHistory(query) {
+    const history = JSON.parse(localStorage.getItem('wikiSearchHistory') || '[]');
+    const filtered = history.filter((h) => h !== query);
+    filtered.unshift(query);
+    localStorage.setItem('wikiSearchHistory', JSON.stringify(filtered.slice(0, 10)));
+}
+
+function showSearchHistory() {
+    const history = JSON.parse(localStorage.getItem('wikiSearchHistory') || '[]');
+    if (history.length === 0) return;
+    
+    let container = document.getElementById('search-history');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'search-history';
+        container.className = 'absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1';
+        document.getElementById('search').parentElement.style.position = 'relative';
+        document.getElementById('search').parentElement.appendChild(container);
+    }
+    
+    container.innerHTML = history.map((h) => 
+        `<div class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+              onclick="document.getElementById('search').value='${h.replace(/'/g, "\\'")}'; searchContent('${h.replace(/'/g, "\\'")}'); hideSearchHistory();">
+            <span class="text-gray-400">\uD83D\uDD0D</span>
+            <span>${h}</span>
+        </div>`
+    ).join('');
+}
+
+function hideSearchHistory() {
+    const container = document.getElementById('search-history');
+    if (container) container.innerHTML = '';
+}
+
 function handleWikiLinks() {
     const contentDiv = document.getElementById('content');
     const links = contentDiv.querySelectorAll('a'); // marked might convert some things to links
@@ -187,6 +222,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search');
     if (searchInput) {
         let searchTimeout;
+        
+        // Show search history on focus
+        searchInput.addEventListener('focus', showSearchHistory);
+        
+        // Hide search history on blur (with delay for click)
+        searchInput.addEventListener('blur', () => {
+            setTimeout(hideSearchHistory, 200);
+        });
+        
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value;
             loadPageList(query);
@@ -196,8 +240,18 @@ window.addEventListener('DOMContentLoaded', () => {
             searchTimeout = setTimeout(() => {
                 if (query.length >= 2) {
                     searchContent(query);
+                    saveSearchHistory(query);
                 }
             }, 300);
+        });
+        
+        // Search on Enter key
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && searchInput.value.length >= 2) {
+                searchContent(searchInput.value);
+                saveSearchHistory(searchInput.value);
+                searchInput.blur();
+            }
         });
     }
     
