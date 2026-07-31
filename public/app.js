@@ -162,7 +162,12 @@ function saveSearchHistory(query) {
 
 function showSearchHistory() {
     const history = JSON.parse(localStorage.getItem('wikiSearchHistory') || '[]');
-    if (history.length === 0) return;
+    if (history.length === 0) {
+        // 히스토리가 없으면 컨테이너 숨김
+        const container = document.getElementById('search-history');
+        if (container) container.style.display = 'none';
+        return;
+    }
     
     let container = document.getElementById('search-history');
     if (!container) {
