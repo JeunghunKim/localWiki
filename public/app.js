@@ -180,11 +180,15 @@ function showSearchHistory() {
             <span>${h}</span>
         </div>`
     ).join('');
+    container.style.display = 'block';
 }
 
 function hideSearchHistory() {
     const container = document.getElementById('search-history');
-    if (container) container.innerHTML = '';
+    if (container) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
 }
 
 function renderLatex(container) {
