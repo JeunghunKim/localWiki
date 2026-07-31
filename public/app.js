@@ -132,6 +132,9 @@ async function loadPageContent(name) {
         const htmlContent = marked.parse(data.content);
         contentDiv.innerHTML = htmlContent;
 
+        // Handle LaTeX math expressions ($...$ and $$...$$)
+        renderLatex(contentDiv);
+        
         // Handle Wiki-links [[PageName]]
         handleWikiLinks();
         
@@ -182,6 +185,36 @@ function showSearchHistory() {
 function hideSearchHistory() {
     const container = document.getElementById('search-history');
     if (container) container.innerHTML = '';
+}
+
+function renderLatex(container) {
+    // KaTeX가 로드되지 않았으면 스킵
+    if (typeof katex === 'undefined') return;
+    
+    // Display math: $$...$$
+    let html = container.innerHTML;
+    html = html.replace(/\$\$([^\$]+)\$\$/g, (match, formula) => {
+        try {
+            return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
+        } catch (e) {
+            return match;
+        }
+    });
+    
+    // Inline math: $...$ (only single $ not adjacent to another $)
+    // Skip if the content between $ signs looks like a number (e.g., $5.99)
+    html = html.replace(/(?<!\$)\$([^\$]+?)\$(?!\$)/g, (match, formula) => {
+        const trimmed = formula.trim();
+        // Skip if it looks like a plain number or currency (e.g., $5.99, $100)
+        if (/^[\d.,]+$/.test(trimmed)) return match;
+        try {
+            return katex.renderToString(trimmed, { displayMode: false, throwOnError: false });
+        } catch (e) {
+            return match;
+        }
+    });
+    
+    container.innerHTML = html;
 }
 
 function handleWikiLinks() {
