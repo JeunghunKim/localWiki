@@ -45,29 +45,170 @@ class SearchIndex {
   }
 
   /**
-   * 검색 실행
+   * 검색 실행 (Fuzzy 검색 + 고급 연산자 지원)
+   *
+   * 연산자:
+   *   `term1 term2`  → AND (모든 term 포함)
+   *   `term1 OR term2` → OR (둘 중 하나라도 포함)
+   *   `-term`         → 제외 (term 불포함)
+   *   `"phrase"`     → 정확한 구문 일치
+   *   `term~`         → Fuzzy (오타 허용, Levenshtein distance 2 이내)
+   *
    * @param {string} query
    * @returns {Array<{title: string, path: string, snippet: string, score: number}>}
    */
   search(query) {
     if (!query || query.trim() === '') return [];
 
-    const tokens = this._tokenize(query);
-    if (tokens.length === 0) return [];
+    const parsed = this._parseQuery(query.trim());
+    if (parsed.include.length === 0 && parsed.includeOr.length === 0) return [];
 
-    // Multi-word AND 검색: 모든 토큰이 포함된 파일만 매칭
-    const candidates = this._intersectTokens(tokens);
-    if (candidates.length === 0) return [];
+    // AND 그룹: 모든 term이 포함된 파일
+    let candidates = null;
+    if (parsed.include.length > 0) {
+      for (const token of parsed.include) {
+        const matched = this._fuzzyMatchTerm(token);
+        if (matched.length === 0) return [];
+        if (candidates === null) {
+          candidates = new Set(matched);
+        } else {
+          candidates = new Set([...candidates].filter((f) => matched.includes(f)));
+        }
+      }
+    }
+
+    // OR 그룹: candidates에 OR term 파일 추가
+    if (parsed.includeOr.length > 0) {
+      const orFiles = new Set();
+      for (const token of parsed.includeOr) {
+        const matched = this._fuzzyMatchTerm(token);
+        matched.forEach((f) => orFiles.add(f));
+      }
+      if (candidates === null) {
+        candidates = orFiles;
+      } else {
+        orFiles.forEach((f) => candidates.add(f));
+      }
+    }
+
+    if (!candidates || candidates.size === 0) return [];
+
+    // 제외(-) term 필터링
+    let resultFiles = [...candidates];
+    for (const token of parsed.exclude) {
+      const matched = this._fuzzyMatchTerm(token);
+      const excludeSet = new Set(matched);
+      resultFiles = resultFiles.filter((f) => !excludeSet.has(f));
+    }
+
+    if (resultFiles.length === 0) return [];
+
+    // 구문 검색 (phrase) 필터링
+    if (parsed.phrase) {
+      resultFiles = resultFiles.filter((relPath) => {
+        const meta = this.files.get(relPath);
+        if (!meta) return false;
+        return meta.content.toLowerCase().includes(parsed.phrase.toLowerCase());
+      });
+    }
+
+    if (resultFiles.length === 0) return [];
 
     // 점수 계산 및 정렬
-    const scored = candidates.map((relPath) => ({
-      ...this._scoreFile(relPath, tokens, query),
+    const queryTokens = this._tokenize(parsed.rawQuery);
+    const scored = resultFiles.map((relPath) => ({
+      ...this._scoreFile(relPath, queryTokens, parsed.rawQuery),
     }));
 
     scored.sort((a, b) => b.score - a.score);
 
     // 상위 30개 반환
     return scored.slice(0, 30);
+  }
+
+  /**
+   * 검색어 파싱: 연산자 분리
+   */
+  _parseQuery(raw) {
+    const result = {
+      include: [],   // AND term (일반 term)
+      includeOr: [], // OR term
+      exclude: [],   // 제외 term (-term)
+      phrase: null,  // 구문 검색 ("phrase")
+      rawQuery: raw,
+    };
+
+    // 구문 검색 먼저 추출
+    const phraseMatch = raw.match(/"([^"]+)"/);
+    if (phraseMatch) {
+      result.phrase = phraseMatch[1];
+      raw = raw.replace(phraseMatch[0], '').trim();
+    }
+
+    // 나머지 토큰 처리
+    const tokens = raw.split(/\s+/).filter((t) => t.length > 0);
+    let i = 0;
+    while (i < tokens.length) {
+      const token = tokens[i];
+      if (token.startsWith('-')) {
+        result.exclude.push(token.slice(1));
+      } else if (token.toUpperCase() === 'OR' && i > 0 && i < tokens.length - 1) {
+        // 이전 토큰을 includeOr로 이동
+        const prev = result.include.pop();
+        if (prev) result.includeOr.push(prev);
+        result.includeOr.push(tokens[i + 1]);
+        i += 2;
+        continue;
+      } else {
+        result.include.push(token);
+      }
+      i++;
+    }
+
+    return result;
+  }
+
+  /**
+   * Fuzzy 매칭: 정확히 일치하지 않아도 Levenshtein distance 2 이내면 매칭
+   */
+  _fuzzyMatchTerm(term) {
+    const lowerTerm = term.toLowerCase();
+    // 정확히 일치하는 term 먼저 확인
+    if (this.terms.has(lowerTerm)) {
+      return [...this.terms.get(lowerTerm)];
+    }
+
+    // Fuzzy 매칭 (Levenshtein distance <= 2)
+    const matchedFiles = new Set();
+    for (const [indexTerm, fileSet] of this.terms) {
+      const dist = this._levenshtein(lowerTerm, indexTerm);
+      if (dist <= 2 && indexTerm.length >= 2) {
+        for (const f of fileSet) matchedFiles.add(f);
+      }
+    }
+
+    return [...matchedFiles];
+  }
+
+  /**
+   * Levenshtein distance 계산
+   */
+  _levenshtein(a, b) {
+    const m = a.length;
+    const n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (a[i - 1] === b[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1];
+        } else {
+          dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+      }
+    }
+    return dp[m][n];
   }
 
   // ─── Private Methods ────────────────────────────────
@@ -145,21 +286,6 @@ class SearchIndex {
     return cleaned
       .split(/\s+/)
       .filter((t) => t.length > 0);
-  }
-
-  /** 여러 토큰의 AND 교집합 */
-  _intersectTokens(tokens) {
-    let candidates = null;
-    for (const token of tokens) {
-      const termSet = this.terms.get(token);
-      if (!termSet || termSet.size === 0) return []; // 하나라도 없으면 빈 결과
-      if (candidates === null) {
-        candidates = new Set(termSet);
-      } else {
-        candidates = new Set([...candidates].filter((f) => termSet.has(f)));
-      }
-    }
-    return candidates ? [...candidates] : [];
   }
 
   /** 파일의 검색 점수 계산 */
