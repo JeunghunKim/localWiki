@@ -305,7 +305,7 @@ function setupMobileMenu() {
     const refreshBtn = document.getElementById('refresh-btn');
 
     function toggleSidebar() {
-        sidebar.classList.toggle('-translate-x-full');
+        sidebar.classList.toggle('-translate-x-[calc(100%+1px)]');
         overlay.classList.toggle('hidden');
     }
 
