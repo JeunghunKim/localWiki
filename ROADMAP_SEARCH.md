@@ -202,15 +202,14 @@ class SearchIndex {
 
 ## ✅ 체크리스트
 
-- [ ] Phase 1: `SearchIndex` 클래스 구현 및 `/api/search` 연동
-- [ ] Phase 1: `chokidar` 이벤트와 인덱스 증분 업데이트 연동
-- [ ] Phase 2: TF 기반 랭킹 알고리즘 구현
-- [ ] Phase 2: 멀티워드 AND/OR 검색 지원
-- [ ] Phase 3: 검색 스니펫 하이라이트 (프론트엔드)
-- [ ] Phase 3: 페이지 내 검색어 하이라이트
-- [ ] Phase 3: 검색 UX 개선 (로딩, 에러 처리, 모바일 대응)
-- [ ] Phase 4: Fuzzy search (오타 허용)
-- [ ] Phase 4: 검색 연산자 지원
-- [ ] Phase 4: Autocomplete
-- [ ] Phase 5: 검색 히스토리 (`localStorage`)
+- [x] Phase 1: `SearchIndex` 클래스 구현 및 `/api/search` 연동
+- [x] Phase 1: `chokidar` 이벤트와 인덱스 증분 업데이트 연동
+- [x] Phase 2: TF 기반 랭킹 알고리즘 구현
+- [x] Phase 2: 멀티워드 AND/OR 검색 지원
+- [x] Phase 3: 검색 스니펫 하이라이트 (프론트엔드)
+- [x] Phase 3: 검색 UX 개선 (로딩, 에러 처리, 모바일 대응)
+- [x] Phase 4: Fuzzy search (오타 허용) + Levenshtein distance
+- [x] Phase 4: 검색 연산자 지원 (AND, OR, -, "phrase")
+- [x] Phase 4: Autocomplete (검색 히스토리 연동)
+- [x] Phase 5: 검색 히스토리 (`localStorage`)
 - [ ] Phase 5: 자주 방문한 페이지 추천
