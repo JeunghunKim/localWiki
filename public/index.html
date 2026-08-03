@@ -14,11 +14,72 @@
     <style>
         .prose h1 { font-size: 2.25rem; font-weight: 800; margin-bottom: 1rem; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
         .prose h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        .prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .prose h4 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose h5, .prose h6 { font-size: 1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
         .prose p { margin-bottom: 1rem; line-height: 1.6; }
         .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
         .prose li { margin-bottom: 0.25rem; }
+        .prose li > ul, .prose li > ol { margin-top: 0.25rem; margin-bottom: 0.25rem; }
         .prose a { color: #0366d6; text-decoration: none; }
         .prose a:hover { text-decoration: underline; }
+        .prose strong { font-weight: 700; }
+        .prose em { font-style: italic; }
+        .prose blockquote {
+            border-left: 4px solid #dfe2e5;
+            padding: 0.5rem 1rem;
+            margin: 1rem 0;
+            color: #6a737d;
+            background-color: #f6f8fa;
+            border-radius: 0 4px 4px 0;
+        }
+        .prose blockquote p { margin-bottom: 0.25rem; }
+        .prose hr { border: 0; border-top: 1px solid #eaecef; margin: 1.5rem 0; }
+        .prose code {
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+        .prose pre {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .prose pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 0.9rem;
+        }
+        /* Table styles */
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            display: block;
+            overflow-x: auto;
+            font-size: 0.95rem;
+        }
+        .prose th {
+            background-color: #f6f8fa;
+            font-weight: 700;
+            text-align: left;
+            padding: 0.6rem 1rem;
+            border: 1px solid #dfe2e5;
+        }
+        .prose td {
+            padding: 0.5rem 1rem;
+            border: 1px solid #dfe2e5;
+            vertical-align: top;
+        }
+        .prose tr:nth-child(even) td { background-color: #fafbfc; }
+        .prose img { max-width: 100%; height: auto; border-radius: 6px; }
+        .prose .katex-display { margin: 1rem 0; overflow-x: auto; overflow-y: hidden; }
         
         .tree-node { cursor: pointer; user-select: none; }
         .tree-children { margin-left: 1.25rem; display: none; }

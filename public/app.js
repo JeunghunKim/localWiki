@@ -119,12 +119,10 @@ async function loadPageContent(name) {
             return;
         }
 
-        // Configure marked with highlight.js
+        // Configure marked (highlight.js 연동은 렌더링 후 hljs.highlightElement로 처리)
         marked.setOptions({
-            highlight: function(code, lang) {
-                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                return hljs.highlight(code, { language }).value;
-            },
+            gfm: true,
+            breaks: true,
             langPrefix: 'hljs language-'
         });
 
@@ -199,31 +197,99 @@ function hideSearchHistory() {
 function renderLatex(container) {
     // KaTeX가 로드되지 않았으면 스킵
     if (typeof katex === 'undefined') return;
-    
-    // Display math: $$...$$
-    let html = container.innerHTML;
-    html = html.replace(/\$\$([^\$]+)\$\$/g, (match, formula) => {
-        try {
-            return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false });
-        } catch (e) {
-            return match;
+
+    // DOM 트리를 순회하며 텍스트 노드만 처리 (pre/code/a 안의 내용은 건너뜀)
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+            const tag = parent.tagName;
+            if (tag === 'CODE' || tag === 'PRE' || tag === 'SCRIPT' || tag === 'STYLE') {
+                return NodeFilter.FILTER_REJECT;
+            }
+            if (parent.closest('.katex')) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
         }
     });
-    
-    // Inline math: $...$ (only single $ not adjacent to another $)
-    // Skip if the content between $ signs looks like a number (e.g., $5.99)
-    html = html.replace(/(?<!\$)\$([^\$]+?)\$(?!\$)/g, (match, formula) => {
-        const trimmed = formula.trim();
-        // Skip if it looks like a plain number or currency (e.g., $5.99, $100)
-        if (/^[\d.,]+$/.test(trimmed)) return match;
-        try {
-            return katex.renderToString(trimmed, { displayMode: false, throwOnError: false });
-        } catch (e) {
-            return match;
+
+    const textNodes = [];
+    while (walker.nextNode()) {
+        textNodes.push(walker.currentNode);
+    }
+
+    textNodes.forEach((node) => {
+        const text = node.nodeValue;
+        if (!text || !text.includes('$')) return;
+
+        // 텍스트를 세그먼트로 분리: {type: 'text'|'math', content}
+        const segments = [];
+        let cursor = 0;
+        let changed = false;
+
+        // 1) Display math $$...$$
+        const displayRe = /\$\$([^\$]+)\$\$/g;
+        let m;
+        while ((m = displayRe.exec(text)) !== null) {
+            if (m.index > cursor) segments.push({ type: 'text', content: text.slice(cursor, m.index) });
+            segments.push({ type: 'display', content: m[1].trim() });
+            cursor = m.index + m[0].length;
+            changed = true;
         }
+        if (cursor < text.length) segments.push({ type: 'text', content: text.slice(cursor) });
+
+        // 2) Inline math $...$ (세그먼트 중 text 타입만 처리)
+        const inlineRe = /\$([^\$]+?)\$/g;
+        const finalSegments = [];
+        segments.forEach((seg) => {
+            if (seg.type !== 'text') {
+                finalSegments.push(seg);
+                return;
+            }
+            let segCursor = 0;
+            let segChanged = false;
+            inlineRe.lastIndex = 0;
+            let im;
+            while ((im = inlineRe.exec(seg.content)) !== null) {
+                const formula = im[1].trim();
+                // 숫자/금액이거나 라텍스 문자(영문,백슬래시)가 없으면 건너뜀
+                if (!/[a-zA-Z\\]/i.test(formula)) continue;
+                if (im.index > segCursor) finalSegments.push({ type: 'text', content: seg.content.slice(segCursor, im.index) });
+                finalSegments.push({ type: 'inline', content: formula });
+                segCursor = im.index + im[0].length;
+                segChanged = true;
+            }
+            if (segCursor > 0 && segCursor < seg.content.length) {
+                finalSegments.push({ type: 'text', content: seg.content.slice(segCursor) });
+            } else if (!segChanged) {
+                finalSegments.push(seg);
+            }
+            if (segChanged) changed = true;
+        });
+
+        if (!changed) return;
+
+        // DocumentFragment로 조립 (HTML 인젝션 방지)
+        const frag = document.createDocumentFragment();
+        finalSegments.forEach((seg) => {
+            if (seg.type === 'text') {
+                frag.appendChild(document.createTextNode(seg.content));
+            } else {
+                const span = document.createElement('span');
+                try {
+                    span.innerHTML = katex.renderToString(seg.content, {
+                        displayMode: seg.type === 'display',
+                        throwOnError: false,
+                    });
+                } catch (e) {
+                    // 렌더링 실패 시 원본 텍스트 유지
+                    frag.appendChild(document.createTextNode('$' + seg.content + '$'));
+                    return;
+                }
+                frag.appendChild(span);
+            }
+        });
+        node.replaceWith(frag);
     });
-    
-    container.innerHTML = html;
 }
 
 function handleWikiLinks() {
