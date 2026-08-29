@@ -120,11 +120,32 @@ async function loadPageContent(name) {
         }
 
         // Configure marked (highlight.js 연동은 렌더링 후 hljs.highlightElement로 처리)
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-            langPrefix: 'hljs language-'
-        });
+        if (!window._markedConfigured) {
+            marked.setOptions({
+                gfm: true,
+                breaks: true,
+                langPrefix: 'hljs language-'
+            });
+
+            // 취소선(del)을 '~~내용~~'(물결표 2개)일 때만 적용하도록 재정의.
+            // 기본 marked.js의 del 토크나이저는 단일 '~내용~'도 취소선으로 인식하여
+            // '30~40g' 같은 범위 표기가 취소선으로 잘못 렌더링되는 문제가 있다.
+            // Tokenizer.prototype.del을 오버라이드하여 정확히 '~~...~~'만 매칭한다.
+            const originalDel = marked.Tokenizer.prototype.del;
+            marked.Tokenizer.prototype.del = function(src) {
+                const match = src.match(/^~~(?=\S)([\s\S]*?\S)~~/);
+                if (match) {
+                    return {
+                        type: 'del',
+                        raw: match[0],
+                        text: match[1],
+                        tokens: this.lexer.inlineTokens(match[1])
+                    };
+                }
+                return undefined; // 매칭 실패 시 취소선 처리하지 않음 (단일 ~는 일반 텍스트)
+            };
+            window._markedConfigured = true;
+        }
 
         // Render Markdown
         const htmlContent = marked.parse(data.content);
